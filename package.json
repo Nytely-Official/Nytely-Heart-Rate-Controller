@@ -1,0 +1,25 @@
+{
+	"name": "nytely-heart-rate-controller",
+	"version": "1.0.0",
+	"description": "Handles and Displays data from a BLE Heart Rate Sensor",
+	"author": "JackNytely",
+	"license": "MIT",
+	"main": "Build/app.js",
+	"scripts": {
+		"start": "ts-node ./src/app.ts",
+		"build": "npm run clear-build & npm run compile",
+		"clear-build": "@powershell rm -r ./Build",
+		"compile": "tsc"
+	},
+	"dependencies": {
+		"@abandonware/noble": "^1.9.2-23",
+		"express": "^4.18.2",
+		"socket.io": "^4.7.2"
+	},
+	"devDependencies": {
+		"@types/express": "^4.17.17",
+		"@types/socket.io": "^3.0.2",
+		"ts-node": "^10.9.1",
+		"typescript": "^5.2.2"
+	}
+}

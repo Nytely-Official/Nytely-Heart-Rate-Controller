@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Nytely Heart Rate Controller</title>
+
+		<script src="/socket.io/socket.io.js"></script>
+		<script>
+			//
+			//Setup the Socket
+			const Socket = io();
+
+			//Listen for Heart Rate Data
+			Socket.on(`Heart_Rate`, Heart_Rate_Data => {
+				//
+			});
+		</script>
+	</head>
+	<body>
+		<h1 class="heart_rate">Heart Rate: <span class="current_bpm">60</span></h1>
+	</body>
+</html>
