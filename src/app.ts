@@ -131,14 +131,14 @@ async function Replay_Heart_Rate_Data(File_Name: string) {
 		Socket_Server.sockets.emit("Heart_Rate_Data", Current_Heart_Rate_Data);
 
 		//Get the Next Heart Rate Data
-		const Next_Heart_Rate_Data = Requested_Data.at(Current_Index);
+		const Next_Heart_Rate_Data = Requested_Data.at(Current_Index + 1);
 
 		//Check if the Next Heart Rate Data is Invalid and End the Loop
 		if (!Next_Heart_Rate_Data) break;
 
 		//Calculate the amount of Time to wait before sending the Next Heart Rate Data
 		const Wait_Period_Milliseconds =
-			Current_Heart_Rate_Data.Timestamp - Next_Heart_Rate_Data.Timestamp;
+			Next_Heart_Rate_Data.Timestamp - Current_Heart_Rate_Data.Timestamp;
 
 		//Check if the Wait Period is Invalid and Continue to the Next Data Entry
 		if (Wait_Period_Milliseconds < 1) continue;
