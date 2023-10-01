@@ -5,7 +5,7 @@ import HTTP from "http";
 import { writeFileSync, openSync, fstatSync, writeSync, readFileSync } from "fs";
 
 //Internal Imports
-import { Heart_Rate, Heart_Rate_Data } from "./Heart_Rate";
+import { Heart_Rate, Nytely_Heart_Rate_Data, Sleeper } from "./Heart_Rate";
 
 //Setup the Heart Rate Client
 const Heart_Rate_Client = new Heart_Rate();
@@ -76,14 +76,10 @@ writeFileSync(Heart_Rate_Data_Path, "");
 const Heart_Rate_Data_File_Descriptor = openSync(Heart_Rate_Data_Path, "r+");
 
 //Listen for Heart Rate Events
-Heart_Rate_Client.on("Heart_Rate_Data", (Heart_Rate_Data: Heart_Rate_Data) => {
+Heart_Rate_Client.on("Heart_Rate_Data", (Heart_Rate_Data: Nytely_Heart_Rate_Data) => {
 	//
-	//Loop through the List of Socket Connections
-	for (const Socket_Connection of Connections_List.values()) {
-		//
-		//Send the Heart Rate Data to the Socket
-		Socket_Connection.emit("Heart_Rate_Data", Heart_Rate_Data);
-	}
+	//Send the Heart Rate Data to the Sockets
+	Socket_Server.sockets.emit("Heart_Rate_Data", Heart_Rate_Data);
 
 	//Get the Heart Rate Data File's Statistics
 	const Heart_Rate_Data_File_Stats = fstatSync(Heart_Rate_Data_File_Descriptor);
@@ -112,3 +108,48 @@ Heart_Rate_Client.on("Heart_Rate_Data", (Heart_Rate_Data: Heart_Rate_Data) => {
 		Heart_Rate_Data_File_Offset // Will Determine where to start writing in the file itself
 	);
 });
+
+//This Replays Heart Rate Data using the Requested File Name
+async function Replay_Heart_Rate_Data(File_Name: string) {
+	//
+	//Get the Requested File
+	const Requested_File = require(`${process.cwd()}/Heart_Rate_Data/${File_Name}`);
+
+	//Check if the Requested File is not valid
+	if (!Requested_File) return;
+
+	//Get the Requested Data from the File
+	const Requested_Data = <Array<Nytely_Heart_Rate_Data>>Requested_File;
+
+	//Check if the Requested Data is Empty
+	if (Requested_Data.length < 1) return;
+
+	//Loop through the Data
+	for (const [Current_Index, Current_Heart_Rate_Data] of Requested_Data.entries()) {
+		//
+		//Send the Current Heart Rate Data to the Sockets
+		Socket_Server.sockets.emit("Heart_Rate_Data", Current_Heart_Rate_Data);
+
+		//Get the Next Heart Rate Data
+		const Next_Heart_Rate_Data = Requested_Data.at(Current_Index);
+
+		//Check if the Next Heart Rate Data is Invalid and End the Loop
+		if (!Next_Heart_Rate_Data) break;
+
+		//Calculate the amount of Time to wait before sending the Next Heart Rate Data
+		const Wait_Period_Milliseconds =
+			Current_Heart_Rate_Data.Timestamp - Next_Heart_Rate_Data.Timestamp;
+
+		//Check if the Wait Period is Invalid and Continue to the Next Data Entry
+		if (Wait_Period_Milliseconds < 1) continue;
+
+		//Sleep for the specified Wait Period
+		await Sleeper(Wait_Period_Milliseconds);
+
+		//Continue to the Next Data Entry
+		continue;
+	}
+
+	//Log the Replay as Completed
+	console.log("Completed Replay");
+}

@@ -104,7 +104,7 @@ export class Heart_Rate extends EventEmitter {
 		console.log(`${Requested_Peripheral.advertisement.localName}: connecting`);
 
 		//Sleep for 5 Seconds to Allow time for the Connection to stabilize
-		await this.#Sleeper(5);
+		await Sleeper(5000);
 
 		//Connect to the Discovered Peripheral
 		await Requested_Peripheral.connectAsync();
@@ -126,7 +126,7 @@ export class Heart_Rate extends EventEmitter {
 		console.log(`${Requested_Peripheral.advertisement.localName}: disconnected`);
 
 		//Sleep for 5 Seconds to Allow time for the Connection to stabilize
-		await this.#Sleeper(5);
+		await Sleeper(5000);
 
 		//Remove all connected Listeners for this Peripheral
 		Requested_Peripheral.removeAllListeners();
@@ -189,7 +189,7 @@ export class Heart_Rate extends EventEmitter {
 	}
 
 	//Parses Heart Rate Data (Buffer) to a Readable Object
-	#Parse_Heart_Rate_Data(Heart_Rate_Data: Buffer): Heart_Rate_Data {
+	#Parse_Heart_Rate_Data(Heart_Rate_Data: Buffer): Nytely_Heart_Rate_Data {
 		//
 		//Convert the Heart Rate Data to an Byte Array
 		const Data_Byte_Array = Array.from(Uint8Array.from(Heart_Rate_Data));
@@ -216,7 +216,7 @@ export class Heart_Rate extends EventEmitter {
 		const RR_Supported = this.#Get_Bit_Status(Raw_Data_Flags, 4);
 
 		//Setup the Parsed Heart Rate Data
-		const Parsed_Heart_Rate_Data: Heart_Rate_Data = {
+		const Parsed_Heart_Rate_Data: Nytely_Heart_Rate_Data = {
 			BPM: 0,
 			Contact_Status: "Not Supported",
 			Energy_Expended_KJ: 0,
@@ -373,22 +373,22 @@ export class Heart_Rate extends EventEmitter {
 			connection_status_interval = null;
 		}
 	}
-
-	//Sleeps for the Requested amount of Duration
-	async #Sleeper(Duration_In_Seconds: number): Promise<void> {
-		//
-		//Setup the New Promise to be Resolved using a Set Timeout with the Requested Duration
-		return new Promise(Resolve_Promise => setTimeout(Resolve_Promise, Duration_In_Seconds * 1000));
-	}
 }
 
-//Setup the Heart Rate Data Type
-export interface Heart_Rate_Data {
+//Setup the Nytely Heart Rate Data Interface
+export interface Nytely_Heart_Rate_Data {
 	BPM: number;
 	Contact_Status: string;
 	Energy_Expended_KJ: number;
 	RR_Interval: number;
 	Timestamp: number;
+}
+
+//Sleeps for the Requested amount of Duration
+export async function Sleeper(Duration_In_Milliseconds: number): Promise<void> {
+	//
+	//Setup the New Promise to be Resolved using a Set Timeout with the Requested Duration
+	return new Promise(Resolve_Promise => setTimeout(Resolve_Promise, Duration_In_Milliseconds));
 }
 
 //Setup the Binary Bit Type
