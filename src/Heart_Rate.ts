@@ -176,8 +176,6 @@ export class Heart_Rate extends EventEmitter {
 
 		//Let the Device Know that we are ready to Read the Data
 		await Heart_Rate_Characteristic.notifyAsync(true);
-
-		Requested_Peripheral.disconnect();
 	}
 
 	//Handles Data Events from the Heart Rate Monitoring Device
