@@ -84,9 +84,6 @@ export class Heart_Rate extends EventEmitter {
 		//Check if the Device's Address is not the Same as the Required Device's Address
 		if (!Discovered_Peripheral.advertisement.localName.includes(My_BLE_Device_Name)) return;
 
-		//Log the Connecting Status
-		console.log(`${Discovered_Peripheral.advertisement.localName}: connecting`);
-
 		//Stop Scanning for Peripherals
 		await noble.stopScanningAsync();
 
@@ -98,16 +95,66 @@ export class Heart_Rate extends EventEmitter {
 
 		//Connect to the Peripheral
 		await this.#Connect_To_Peripheral(Discovered_Peripheral);
+	}
 
+	//Connects to the Device
+	async #Connect_To_Peripheral(Requested_Peripheral: Peripheral) {
+		//
+		//Log the Connecting Status
+		console.log(`${Requested_Peripheral.advertisement.localName}: connecting`);
+
+		//Sleep for 5 Seconds to Allow time for the Connection to stabilize
+		await this.#Sleeper(5);
+
+		//Connect to the Discovered Peripheral
+		await Requested_Peripheral.connectAsync();
+
+		//Listen for Disconnect Events
+		Requested_Peripheral.once(
+			"disconnect",
+			this.#Handle_Disconnect_Events.bind(this, Requested_Peripheral)
+		);
+
+		//Handle Connect Events for the Peripheral
+		await this.#Handle_Connect_Events(Requested_Peripheral);
+	}
+
+	//Handles Disconnect Event for the Heart Rate Monitoring Device
+	async #Handle_Disconnect_Events(Requested_Peripheral: Peripheral, error: Error) {
+		//
+		//Log the Disconnect Status
+		console.log(`${Requested_Peripheral.advertisement.localName}: disconnected`);
+
+		//Sleep for 5 Seconds to Allow time for the Connection to stabilize
+		await this.#Sleeper(5);
+
+		//Remove all connected Listeners for this Peripheral
+		Requested_Peripheral.removeAllListeners();
+
+		//Clear the Monitoring Device
+		this.#Monitoring_Device = undefined;
+
+		//Attempt to Monitor Again
+		await this.Monitor_Heart_Rate();
+	}
+
+	//Handles Connect Event for the Heart Rate Monitoring Device
+	async #Handle_Connect_Events(Requested_Peripheral: Peripheral) {
+		//
 		//Run the Connection Validation on the Peripheral (To prevent running future code if the peripheral is not connected yet)
-		await this.#Validate_Connection_Status(Discovered_Peripheral);
+		await this.#Validate_Connection_Status(Requested_Peripheral);
+
+		//Log the State of the Peripheral
+		console.log(`${Requested_Peripheral.advertisement.localName}: ${Requested_Peripheral.state}`);
 
 		//Get the Peripheral's Data
-		const Peripheral_Data =
-			await Discovered_Peripheral.discoverAllServicesAndCharacteristicsAsync();
+		const Peripheral_Data = await Requested_Peripheral.discoverAllServicesAndCharacteristicsAsync();
 
 		//Get the Peripheral's Service List
 		const Service_List = Peripheral_Data.services;
+
+		//Check if there are No Services
+		if (Service_List.length < 1) return Requested_Peripheral.disconnect();
 
 		//Get the Peripheral's Heart Rate Service
 		const Heart_Rate_Service = Service_List.find(Service => Service.name == "Heart Rate");
@@ -121,7 +168,7 @@ export class Heart_Rate extends EventEmitter {
 		//Check if the Requested Services are Invalid
 		if (!Heart_Rate_Service || !Battery_Service || !Device_Information_Service) return;
 
-		//Get the Heart Rate Characteristic from the the Heart Rate Service
+		//Setup the Heart Rate Characteristic
 		const Heart_Rate_Characteristic = Heart_Rate_Service.characteristics[0];
 
 		//Setup the Event Listener to Handle Data from the Heart Rate Monitoring Device
@@ -129,35 +176,8 @@ export class Heart_Rate extends EventEmitter {
 
 		//Let the Device Know that we are ready to Read the Data
 		await Heart_Rate_Characteristic.notifyAsync(true);
-	}
 
-	//Connects to the Device
-	async #Connect_To_Peripheral(Requested_Peripheral: Peripheral) {
-		//
-		//Connect to the Discovered Peripheral
-		await Requested_Peripheral.connectAsync();
-
-		//Log the State of the Peripheral
-		console.log(`${Requested_Peripheral.advertisement.localName}: ${Requested_Peripheral.state}`);
-
-		//Listen for Disconnect Events
-		Requested_Peripheral.once(
-			"disconnect",
-			this.#Handle_Disconnect_Events.bind(this, Requested_Peripheral)
-		);
-	}
-
-	//Handles Disconnect Event for the Heart Rate Monitoring Device
-	async #Handle_Disconnect_Events(Requested_Peripheral: Peripheral, error: Error) {
-		//
-		//Log the Disconnect Status
-		console.log(`${Requested_Peripheral.advertisement.localName}: disconnected`);
-
-		//Log the Reconnecting Status
-		console.log(`${Requested_Peripheral.advertisement.localName}: reconnecting`);
-
-		//Reconnect to the Device
-		await this.#Connect_To_Peripheral(Requested_Peripheral);
+		Requested_Peripheral.disconnect();
 	}
 
 	//Handles Data Events from the Heart Rate Monitoring Device
@@ -354,6 +374,13 @@ export class Heart_Rate extends EventEmitter {
 			//Delete the Interval
 			connection_status_interval = null;
 		}
+	}
+
+	//Sleeps for the Requested amount of Duration
+	async #Sleeper(Duration_In_Seconds: number): Promise<void> {
+		//
+		//Setup the New Promise to be Resolved using a Set Timeout with the Requested Duration
+		return new Promise(Resolve_Promise => setTimeout(Resolve_Promise, Duration_In_Seconds * 1000));
 	}
 }
 
