@@ -116,7 +116,7 @@ Heart_Rate_Client.on("Heart_Rate_Data", (Heart_Rate_Data: Nytely_Heart_Rate_Data
 		Heart_Rate_Data_File_Offset // Will Determine where to start writing in the file itself
 	);
 });
-Replay_Heart_Rate_Data("HRD1695951182634.json");
+
 //This Replays Heart Rate Data using the Requested File Name
 async function Replay_Heart_Rate_Data(File_Name: string) {
 	//
