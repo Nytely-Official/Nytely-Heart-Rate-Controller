@@ -1,104 +1,98 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Nytely Heart Rate Controller</title>
+	<head>
+		<title>Nytely Heart Rate Controller</title>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script defer>
-      //
+		<script src="/socket.io/socket.io.js"></script>
+		<script defer>
+			//
 
-      //Variables for BPM Graph
-      const BPM_Array = [];
-      let Prev_BPM = 50;
+			//Variables for BPM Graph
+			const BPM_Array = [];
+			let Prev_BPM = 50;
 
-      //Setup the Socket
-      const Socket = io();
+			//Setup the Socket
+			const Socket = io();
 
-      //Listen for Heart Rate Data
-      Socket.on(`Heart_Rate_Data`, (Heart_Rate_Data) => {
-        //
-        //Get the Current BPM Element
-        const Current_BPM_Element = document.querySelector(".current_bpm");
+			//Listen for Heart Rate Data
+			Socket.on(`Heart_Rate_Data`, Heart_Rate_Data => {
+				//
+				//Get the Current BPM Element
+				const Current_BPM_Element = document.querySelector(".current_bpm");
 
-        if (!Current_BPM_Element)
-          throw new Error("Current BPM Element is Undefined");
+				if (!Current_BPM_Element) throw new Error("Current BPM Element is Undefined");
 
-        //Get the Current BPM
-        const Current_BPM = Heart_Rate_Data.BPM;
+				//Get the Current BPM
+				const Current_BPM = Heart_Rate_Data.BPM;
 
-        //Save last 10 BPM values to BPM_Array
-        if (BPM_Array[9]) BPM_Array.shift();
-        BPM_Array.push(Current_BPM);
+				//Save last 10 BPM values to BPM_Array
+				if (BPM_Array[9]) BPM_Array.shift();
+				BPM_Array.push(Current_BPM);
 
-        //Get the Current RR Interval
-        const Current_RR_Interval = Heart_Rate_Data.RR_Interval;
+				//Get the Current RR Interval
+				const Current_RR_Interval = Heart_Rate_Data.RR_Interval;
 
-        //Get the Current Contact Status
-        const Current_Contact_Status = Heart_Rate_Data.Contact_Status;
+				//Get the Current Contact Status
+				const Current_Contact_Status = Heart_Rate_Data.Contact_Status;
 
-        //Check if the Heart Rate Sensor is not making Contact
-        if (Current_Contact_Status !== "Contact") {
-          //
-          //Update the Current BPM to be Empty
-          Current_BPM_Element.innerText = "";
+				//Check if the Heart Rate Sensor is not making Contact
+				if (Current_Contact_Status !== "Contact") {
+					//
+					//Update the Current BPM to be Empty
+					Current_BPM_Element.innerText = "";
 
-          //End the Script
-          return;
-        }
+					//End the Script
+					return;
+				}
 
-        //Update the BPM
-        Current_BPM_Element.innerText = Current_BPM;
+				//Update the BPM
+				Current_BPM_Element.innerText = Current_BPM;
 
-        //Get The BPM Graph Element
-        const graph = document.querySelector("#graph");
-        const graphContext = graph.getContext("2d");
+				//Get The BPM Graph Element
+				const graph = document.querySelector("#graph");
+				const graphContext = graph.getContext("2d");
 
-        //Clear Graph
-        graphContext.clearRect(0, 0, 200, 200);
+				//Clear Graph
+				graphContext.clearRect(0, 0, 200, 200);
 
-        //Graph Styling
-        graphContext.strokeStyle = "white";
+				//Graph Styling
+				graphContext.strokeStyle = "white";
 
-        //Reset Graph Line
-        let Graph_Steps = 0;
+				//Reset Graph Line
+				let Graph_Steps = 0;
 
-        //Loop Through BPM_Array
-        BPM_Array.forEach((Array_BPM) => {
-          //Start New Canvas Line
-          graphContext.beginPath();
+				//Loop Through BPM_Array
+				BPM_Array.forEach(Array_BPM => {
+					//Start New Canvas Line
+					graphContext.beginPath();
 
-          //Move Starting Line Position
-          graphContext.moveTo(Graph_Steps, 100 - (Prev_BPM - 50));
+					//Move Starting Line Position
+					graphContext.moveTo(Graph_Steps, 100 - (Prev_BPM - 50));
 
-          //Draw Graph line
-          graphContext.lineTo(Graph_Steps + 20, 100 - (Array_BPM - 50));
-          graphContext.stroke();
+					//Draw Graph line
+					graphContext.lineTo(Graph_Steps + 20, 100 - (Array_BPM - 50));
+					graphContext.stroke();
 
-          //Increment Variables
-          Graph_Steps += 20;
-          Prev_BPM = Array_BPM;
-        });
-      });
-    </script>
+					//Increment Variables
+					Graph_Steps += 20;
+					Prev_BPM = Array_BPM;
+				});
+			});
+		</script>
 
-    <style>
-      .heart_rate {
-        color: #ff4e4e;
-        font-size: 100px;
-        text-shadow: #000 -5px 5px 10px;
-        font-family: verdana;
-        text-align: right;
-      }
-    </style>
-  </head>
-  <body>
-    <h1 class="heart_rate">♡<span class="current_bpm"></span></h1>
-    <canvas
-      id="graph"
-      width="200"
-      height="200"
-      style="border: 1px solid #000000"
-    ></canvas>
-    <script></script>
-  </body>
+		<style>
+			.heart_rate {
+				color: #ff4e4e;
+				font-size: 100px;
+				text-shadow: #000 -5px 5px 10px;
+				font-family: verdana;
+				text-align: right;
+			}
+		</style>
+	</head>
+	<body>
+		<h1 class="heart_rate">♡<span class="current_bpm"></span></h1>
+		<canvas id="graph" width="200" height="200" style="border: 1px solid #000000"></canvas>
+		<script></script>
+	</body>
 </html>

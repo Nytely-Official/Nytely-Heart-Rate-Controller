@@ -2,7 +2,7 @@
 import Express from "express";
 import Socket from "socket.io";
 import HTTP from "http";
-import { writeFileSync, openSync, fstatSync, writeSync, readFileSync } from "fs";
+import { writeFileSync, openSync, fstatSync, writeSync, existsSync } from "fs";
 
 //Internal Imports
 import { Heart_Rate, Nytely_Heart_Rate_Data, Sleeper } from "./Heart_Rate";
@@ -54,8 +54,16 @@ function Socket_Disconnect_Handler(Connection: Socket.Socket) {
 }
 
 //Setup the TTS Page
-App.get("/", (req, res) => {
-	res.sendFile(`${process.cwd()}/public/index.html`);
+App.get("/*", (req, res) => {
+	//
+	//Get the Requested File's Path
+	const Requested_File_Path = `${process.cwd()}/public/${req.url}`;
+
+	//Check if the Requested File is not Valid and return "Not Found Error"
+	if (!existsSync(Requested_File_Path)) return res.sendStatus(404);
+
+	//Return the Requested File
+	res.sendFile(Requested_File_Path);
 });
 
 //Handle Events from Socket Clients
@@ -108,7 +116,7 @@ Heart_Rate_Client.on("Heart_Rate_Data", (Heart_Rate_Data: Nytely_Heart_Rate_Data
 		Heart_Rate_Data_File_Offset // Will Determine where to start writing in the file itself
 	);
 });
-
+Replay_Heart_Rate_Data("HRD1695951182634.json");
 //This Replays Heart Rate Data using the Requested File Name
 async function Replay_Heart_Rate_Data(File_Name: string) {
 	//
